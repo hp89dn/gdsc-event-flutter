@@ -15,11 +15,19 @@ export class AuthService {
       .getAuth()
       .verifyIdToken(loginAuthDto.id_token);
 
-    return await this.usersService.findByEmailOrCreate({
+    const user = await this.usersService.findByEmail(res.email);
+
+    if (user) return user;
+
+    const USER = {
       name: res.name,
       email: res.email,
-      picture: res.picture,
-    });
+      roles: ['user'],
+    };
+
+    const newUser = await this.usersService.create(USER);
+
+    return newUser;
   }
 
   async validateById(id) {

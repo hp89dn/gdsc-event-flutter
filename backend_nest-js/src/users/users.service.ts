@@ -1,41 +1,66 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User } from './entities/user.entity';
-import { CreateUserDto } from './dto/create-user.dto';
-import { FindByEmailOrCreateUserDto } from './dto/find-by-email-or-create-user.dto';
+import { FirebaseService } from '../firebase/firebase.service';
 
 @Injectable()
 export class UsersService {
-  constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
-  ) {}
+  constructor(private readonly firebaseService: FirebaseService) {}
 
-  async create(createUserDto: CreateUserDto) {
-    const user = await this.usersRepository.save({
-      name: createUserDto.name,
-      email: createUserDto.email,
-      picture: createUserDto.picture,
-    });
-    return user;
-  }
+  async create({
+    name,
+    email,
+    roles,
+  }: {
+    name: string;
+    email: string;
+    roles: string[];
+  }) {
+    const usersRef = await this.firebaseService
+      .getFirestore()
+      .collection('users')
+      .add({
+        name,
+        email,
+        roles,
+      });
 
-  async findByEmailOrCreate(
-    findByEmailOrCreateUserDto: FindByEmailOrCreateUserDto,
-  ) {
-    const user = await this.usersRepository.findOne({
-      where: { email: findByEmailOrCreateUserDto.email },
-    });
-    if (user) return user;
-    return await this.usersRepository.save(findByEmailOrCreateUserDto);
-  }
+    const user = await this.firebaseService
+      .getFirestore()
+      .collection('users')
+      .doc(usersRef.id)
+      .get();
 
-  async findById(id: string) {
-    return await this.usersRepository.findOne({ where: { id } });
+    return {
+      refDoc: usersRef.id,
+      data: user.data(),
+    };
   }
 
   async findByEmail(email: string) {
-    return await this.usersRepository.findOne({ where: { email } });
+    const usersRef = await this.firebaseService
+      .getFirestore()
+      .collection('users')
+      .where('email', '==', email)
+      .get();
+
+    if (usersRef.empty) {
+      return null;
+    }
+
+    return {
+      refDoc: usersRef.docs[0].id,
+      ...usersRef.docs[0].data(),
+    };
+  }
+
+  async findById(id) {
+    const user = await this.firebaseService
+      .getFirestore()
+      .collection('users')
+      .doc(id)
+      .get();
+    return {
+      refDoc: id,
+      ...user.data(),
+    };
   }
 }

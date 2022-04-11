@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
 import { UsersService } from './users.service';
+import { FirebaseModule } from 'src/firebase/firebase.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User])],
+  imports: [FirebaseModule],
   providers: [UsersService],
   exports: [UsersService],
 })

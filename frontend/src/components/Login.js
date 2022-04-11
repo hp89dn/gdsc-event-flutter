@@ -32,7 +32,9 @@ export default function Login() {
   const signInWithGoogle = () => {
     auth
       .signInWithPopup(googleAuthProvider)
-      .then((response) => {
+      .then(async (response) => {
+        const token = await auth.currentUser.getIdToken(true);
+        console.log(token);
         setShow(true);
       })
       .catch((error) => {});

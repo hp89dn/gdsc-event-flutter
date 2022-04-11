@@ -14,7 +14,7 @@ import { Request } from 'express';
 
 declare module 'express-session' {
   interface Session {
-    uid: string;
+    refDoc: string;
   }
 }
 
@@ -37,17 +37,17 @@ export class AuthController {
           'Firebase ID token has invalid signature',
         );
       });
-    req.session.uid = user.id;
+    req.session.refDoc = user.refDoc;
     return user;
   }
 
   @Get('/verify')
   async validateById(@Req() req: Request) {
-    const uid = req.session.uid;
+    const refDoc = req.session.refDoc;
 
-    if (!uid) throw new UnauthorizedException('Invalid user');
+    if (!refDoc) throw new UnauthorizedException('Invalid user');
 
-    return await this.authService.validateById(uid).catch(() => {
+    return await this.authService.validateById(refDoc).catch(() => {
       throw new UnauthorizedException('Invalid user');
     });
   }
@@ -57,6 +57,6 @@ export class AuthController {
     req.session.destroy(() => {
       // nothing to do
     });
-    return true;
+    return 'logout successful';
   }
 }

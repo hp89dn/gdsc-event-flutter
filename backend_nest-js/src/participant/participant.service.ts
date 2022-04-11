@@ -1,28 +1,43 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { CreateParticipantDto } from './dto/create-participant.dto';
-import { Participant } from './entities/participant.entity';
+import { UpdateParticipantDto } from './dto/update-participant.dto';
+import { FirebaseService } from '../firebase/firebase.service';
 
 @Injectable()
 export class ParticipantService {
-  constructor(
-    @InjectRepository(Participant)
-    private readonly participantRepository: Repository<Participant>,
-  ) {}
+  constructor(private readonly firebaseService: FirebaseService) {}
 
-  create(createParticipantDto: CreateParticipantDto) {
-    return this.participantRepository.save({
-      user_id: createParticipantDto.user_id,
-      room_id: createParticipantDto.room_id,
-    });
+  async create(createParticipantDto: CreateParticipantDto) {
+    const participantRef = await this.firebaseService
+      .getFirestore()
+      .collection('participants')
+      .add(createParticipantDto);
+
+    const participant = await this.firebaseService
+      .getFirestore()
+      .collection('users')
+      .doc(participantRef.id)
+      .get();
+
+    return {
+      refDoc: participantRef.id,
+      ...participant,
+    };
   }
 
   findAll() {
-    return this.participantRepository.find();
+    return `This action returns all participant`;
   }
 
   findOne(id: number) {
-    return this.participantRepository.findOne({ where: { id } });
+    return `This action returns a #${id} participant`;
+  }
+
+  update(id: number, updateParticipantDto: UpdateParticipantDto) {
+    return `This action updates a #${id} participant`;
+  }
+
+  remove(id: number) {
+    return `This action removes a #${id} participant`;
   }
 }
