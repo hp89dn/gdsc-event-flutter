@@ -31,7 +31,7 @@ export class UsersService {
 
     return {
       refDoc: usersRef.id,
-      data: user.data(),
+      ...user.data(),
     };
   }
 

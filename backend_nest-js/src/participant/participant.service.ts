@@ -15,29 +15,104 @@ export class ParticipantService {
 
     const participant = await this.firebaseService
       .getFirestore()
-      .collection('users')
+      .collection('participants')
       .doc(participantRef.id)
       .get();
 
     return {
       refDoc: participantRef.id,
-      ...participant,
+      ...participant.data(),
     };
   }
 
-  findAll() {
-    return `This action returns all participant`;
+  async findAll() {
+    const participantRef = await this.firebaseService
+      .getFirestore()
+      .collection('participants')
+      .get();
+
+    const listParticipants = [];
+
+    participantRef.forEach((doc) => {
+      listParticipants.push({
+        refDoc: doc.id,
+        ...doc.data(),
+      });
+    });
+
+    return listParticipants;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} participant`;
+  async findOne(refDoc: string) {
+    const participantRef = await this.firebaseService
+      .getFirestore()
+      .collection('participants')
+      .doc(refDoc)
+      .get();
+
+    if (!participantRef.exists) return null;
+
+    return {
+      refDoc: refDoc,
+      ...participantRef.data(),
+    };
   }
 
-  update(id: number, updateParticipantDto: UpdateParticipantDto) {
-    return `This action updates a #${id} participant`;
+  async findByEmail(email: string) {
+    const participantRef = await this.firebaseService
+      .getFirestore()
+      .collection('participants')
+      .where('email', '==', email)
+      .get();
+
+    if (participantRef.empty) {
+      return null;
+    }
+
+    return {
+      refDoc: participantRef.docs[0].id,
+      ...participantRef.docs[0].data(),
+    };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} participant`;
+  async update(refDoc: string, updateParticipantDto: UpdateParticipantDto) {
+    const participantRef = await this.firebaseService
+      .getFirestore()
+      .collection('participants')
+      .doc(refDoc)
+      .update({
+        email: updateParticipantDto.email,
+        status: updateParticipantDto.status,
+      });
+
+    const participant = await this.firebaseService
+      .getFirestore()
+      .collection('participants')
+      .doc(refDoc)
+      .get();
+
+    return {
+      refDoc: refDoc,
+      ...participant.data(),
+    };
+  }
+
+  async remove(refDoc: string) {
+    const participantRef = await this.firebaseService
+      .getFirestore()
+      .collection('participants')
+      .doc(refDoc)
+      .delete();
+
+    const participant = await this.firebaseService
+      .getFirestore()
+      .collection('users')
+      .doc(refDoc)
+      .get();
+
+    return {
+      refDoc: refDoc,
+      ...participant.data(),
+    };
   }
 }

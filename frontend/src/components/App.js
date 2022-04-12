@@ -1,7 +1,5 @@
-import React from "react";
-import Signup from "./Signup";
+import React, { useLayoutEffect, useContext } from "react";
 import { Container } from "react-bootstrap";
-import { AuthProvider } from "../contexts/AuthContext";
 import {
   BrowserRouter as Router,
   Switch,
@@ -11,35 +9,26 @@ import {
 import Dashboard from "./Dashboard";
 import Login from "./Login";
 import PrivateRoute from "./PrivateRoute";
-import ForgotPassword from "./ForgotPassword";
-import UpdateProfile from "./UpdateProfile";
+import { useAuth } from "../contexts/AuthContext";
+import AdminPage from "./AdminPage";
 
 function App() {
+  const { roles } = useAuth();
   return (
     <Container
       className="d-flex align-items-center justify-content-center"
       style={{ minHeight: "100vh" }}
     >
-      <div className="w-100" style={{ maxWidth: "400px" }}>
-        <Router>
-          <AuthProvider>
-            <Switch>
-              <PrivateRoute path="/" exact component={Dashboard} />
-              {/* <PrivateRoute path="/update-profile" component={UpdateProfile} /> */}
-              <Route path="/signup" exact component={Signup} />
-              <Route path="/login" exact component={Login} />
-              {/* <Route path="/forgot-password" component={ForgotPassword} /> */}
-              <Route
-                exact
-                path="/*"
-                component={() => {
-                  window.location.href = "/login";
-                }}
-              />
-            </Switch>
-          </AuthProvider>
-        </Router>
-      </div>
+      <Router>
+        <Switch>
+          <Route path="/login" exact component={Login} />
+          <PrivateRoute path="/" exact component={Dashboard} />
+          {roles.includes("admin") && (
+            <Route path="/admin" exact component={AdminPage} />
+          )}
+          <Route exact path="/*" component={() => <Redirect to="/login" />} />
+        </Switch>
+      </Router>
     </Container>
   );
 }

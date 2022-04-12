@@ -1,0 +1,33 @@
+version: "3"
+
+# Network
+networks:
+  back-end:
+    driver: "bridge"
+  front-end:
+    driver: "bridge"
+
+services:
+  # Container NodeJS
+  server:
+    container_name: nodejs
+    build:
+      context: ./backend_nest-js
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    restart: always
+    networks:
+      - back-end
+
+  # Container ReactJS
+  client:
+    container_name: reactjs
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    restart: always
+    networks:
+      - front-end
