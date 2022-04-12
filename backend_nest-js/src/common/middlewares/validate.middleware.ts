@@ -2,8 +2,8 @@ import {
   Injectable,
   NestMiddleware,
   Req,
-  Res,
   Next,
+  Res,
   UnauthorizedException,
 } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
@@ -17,11 +17,12 @@ export class VaidateMiddleware implements NestMiddleware {
     @Res() res: Response,
     @Next() next: NextFunction,
   ) {
-    const { refDoc } = req.session;
-    if (!refDoc) throw new UnauthorizedException('not logged in');
-    const user = await this.authService.validateById(refDoc).catch(() => {
+    const { user_id } = req.session;
+    if (!user_id) throw new UnauthorizedException('not logged in');
+    const user = await this.authService.validateById(user_id).catch(() => {
       throw new UnauthorizedException('invalid user');
     });
+
     req.user = user;
     next();
   }

@@ -1,5 +1,6 @@
 import React, { useContext, useState, useLayoutEffect } from "react";
 import { auth } from "../firebase";
+import fetch from "../axios";
 
 const AuthContext = React.createContext();
 
@@ -37,12 +38,19 @@ export function AuthProvider({ children }) {
   }
 
   useLayoutEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      setCurrentUser(user);
-      setLoading(false);
-    });
+    const fetchAuth = async () =>
+      await fetch
+        .get("/auth/verify")
+        .then(async ({ data }) => {
+          await setRoles(data.roles);
+          await setCurrentUser(data.user);
+          await setLoading(false);
+        })
+        .catch((err) => {
+          setLoading(false);
+        });
 
-    return unsubscribe;
+    fetchAuth();
   }, []);
 
   const value = {

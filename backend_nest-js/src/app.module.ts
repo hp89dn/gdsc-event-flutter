@@ -3,7 +3,7 @@ import { FirebaseModule } from './firebase/firebase.module';
 import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
-import { ParticipantModule } from './participant/participant.module';
+import { ParticipantModule } from './participants/participants.module';
 
 @Module({
   imports: [

@@ -20,7 +20,7 @@ export class ParticipantService {
       .get();
 
     return {
-      refDoc: participantRef.id,
+      id: participantRef.id,
       ...participant.data(),
     };
   }
@@ -35,26 +35,28 @@ export class ParticipantService {
 
     participantRef.forEach((doc) => {
       listParticipants.push({
-        refDoc: doc.id,
-        ...doc.data(),
+        id: doc.id,
+        email: doc.data().email,
+        status: doc.data().status,
       });
     });
 
     return listParticipants;
   }
 
-  async findOne(refDoc: string) {
+  async findOne(id: string) {
     const participantRef = await this.firebaseService
       .getFirestore()
       .collection('participants')
-      .doc(refDoc)
+      .doc(id)
       .get();
 
     if (!participantRef.exists) return null;
 
     return {
-      refDoc: refDoc,
-      ...participantRef.data(),
+      id: id,
+      email: participantRef.data().email,
+      status: participantRef.data().status,
     };
   }
 
@@ -70,16 +72,17 @@ export class ParticipantService {
     }
 
     return {
-      refDoc: participantRef.docs[0].id,
-      ...participantRef.docs[0].data(),
+      id: participantRef.docs[0].id,
+      email: participantRef.docs[0].data().email,
+      status: participantRef.docs[0].data().status,
     };
   }
 
-  async update(refDoc: string, updateParticipantDto: UpdateParticipantDto) {
+  async update(id: string, updateParticipantDto: UpdateParticipantDto) {
     const participantRef = await this.firebaseService
       .getFirestore()
       .collection('participants')
-      .doc(refDoc)
+      .doc(id)
       .update({
         email: updateParticipantDto.email,
         status: updateParticipantDto.status,
@@ -88,31 +91,35 @@ export class ParticipantService {
     const participant = await this.firebaseService
       .getFirestore()
       .collection('participants')
-      .doc(refDoc)
+      .doc(id)
       .get();
 
     return {
-      refDoc: refDoc,
-      ...participant.data(),
+      id: id,
+      email: participant.data().email,
+      status: participant.data().status,
     };
   }
 
-  async remove(refDoc: string) {
+  async remove(id: string) {
+    const participant = await this.firebaseService
+      .getFirestore()
+      .collection('participants')
+      .doc(id)
+      .get();
+
+    if (!participant.exists) return null;
+
     const participantRef = await this.firebaseService
       .getFirestore()
       .collection('participants')
-      .doc(refDoc)
+      .doc(id)
       .delete();
 
-    const participant = await this.firebaseService
-      .getFirestore()
-      .collection('users')
-      .doc(refDoc)
-      .get();
-
     return {
-      refDoc: refDoc,
-      ...participant.data(),
+      id: id,
+      email: participant.data().email,
+      status: participant.data().status,
     };
   }
 }

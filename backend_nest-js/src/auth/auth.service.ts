@@ -30,7 +30,7 @@ export class AuthService {
     return newUser;
   }
 
-  async validateById(id) {
+  async validateById(id: string) {
     return await this.usersService.findById(id);
   }
 }

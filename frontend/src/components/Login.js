@@ -3,7 +3,7 @@ import { Form, Button, Card, Alert } from "react-bootstrap";
 import { Link, useHistory } from "react-router-dom";
 import { auth, googleAuthProvider } from "../firebase";
 import { useAuth } from "../contexts/AuthContext";
-import server from "../axios";
+import fetch from "../axios";
 
 export default function Login() {
   const emailRef = useRef();
@@ -18,13 +18,12 @@ export default function Login() {
       .signInWithPopup(googleAuthProvider)
       .then(async (res) => {
         const token = await auth.currentUser.getIdToken(true);
-        await server
+        await fetch
           .post("/auth/login/google", { id_token: token })
           .then(async (res) => {
             console.log(token);
             await setRoles(res.data.roles);
             await setLoading(false);
-
             if (res.data.roles.includes("admin")) {
               history.push("/admin");
             } else {

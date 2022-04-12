@@ -1,32 +1,49 @@
-import React, { useState, useLayoutEffect } from "react";
+import React, { useState, useLayoutEffect, useCallback } from "react";
 import { Container, Table, Button, Form } from "react-bootstrap";
-import server from "../axios";
+import { throttle } from "throttle-debounce";
+import fetch from "../axios";
 
 export default function AdminPage() {
   const [participants, setParticipants] = useState([]);
+  const [search, setSearch] = useState("");
+  const [participantsSearched, setParticipantsSearched] = useState([]);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
 
-  const fetchParticipants = async () => {
-    await server
-      .get("/participant")
+  const searchFunc = useCallback(
+    throttle(
+      500,
+      (str) => {
+        const reg = new RegExp(`${str}`, "g");
+        const arr = participants.filter((item) => item.email.match(reg));
+        setParticipantsSearched(arr);
+      },
+      { noLeading: false, noTrailing: false }
+    ),
+    [participants]
+  );
+
+  useLayoutEffect(() => {
+    setParticipantsSearched(participants);
+    searchFunc(search);
+  }, [search, participants]);
+
+  useLayoutEffect(() => {
+    fetch
+      .get("/participants")
       .then((res) => {
         setParticipants(res.data);
       })
       .catch((err) => {
         console.log(err);
       });
-  };
-
-  useLayoutEffect(() => {
-    fetchParticipants();
   }, []);
 
-  const handleButtonAdd = async () => {
+  const handleButtonAdd = async (e) => {
+    e.preventDefault();
     setLoading(true);
-
-    await server
-      .post("/participant", { email })
+    await fetch
+      .post("/participants", { email })
       .then(async (res) => {
         const checkParticipant = await participants.some(
           (participant) => participant.email === res.data.email
@@ -44,12 +61,12 @@ export default function AdminPage() {
 
   const handleButtonAttendance = async (id) => {
     setLoading(true);
-    await server
-      .put(`/participant/${id}`)
+    await fetch
+      .put(`/participants/${id}`, { status: "participated" })
       .then(async (res) => {
         await setParticipants(
           participants.map((participant) =>
-            participant.refDoc == res.data.refDoc ? res.data : participant
+            participant.id == res.data.id ? res.data : participant
           )
         );
         await setLoading(false);
@@ -60,33 +77,54 @@ export default function AdminPage() {
   };
 
   const handleButtonDelete = async (id) => {
-    await server.delete(`/participant/${id}`).then(async (res) => {
-      await setParticipants(participants.filter((p) => p.refDoc !== id));
-    });
+    setLoading(true);
+    await fetch
+      .delete(`/participants/${id}`)
+      .then(async (res) => {
+        await setParticipants(participants.filter((p) => p.id !== id));
+        await setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+      });
   };
 
   return (
-    <Container className="fluid">
-      <Form.Group className="mb-3" controlId="formBasicEmail">
+    <Container className="fluid" style={{ minHeight: "100vh" }}>
+      <Form onSubmit={handleButtonAdd} className="mt-4">
+        <Form.Group controlId="formBasicEmail">
+          <Form.Control
+            type="email"
+            disabled={loading}
+            placeholder="Enter email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+            }}
+          />
+          <Button type="submit" disabled={loading} className="mt-3">
+            Add Participant
+          </Button>
+        </Form.Group>
+      </Form>
+      <Form.Group controlId="formBasicEmail">
         <Form.Control
           type="email"
-          placeholder="Enter email"
-          value={email}
+          disabled={loading}
+          placeholder="Search"
+          value={search}
           onChange={(e) => {
-            setEmail(e.target.value);
+            setSearch(e.target.value);
           }}
         />
-        <Button disabled={loading} onClick={handleButtonAdd} className="mt-2">
-          Add Participant
-        </Button>
       </Form.Group>
       <div>
-        <h4>Count: {participants.length}</h4>
+        <h4>Count: {participantsSearched.length}</h4>
       </div>
       <div className="mb-2">
         <h4>
           Participated:{" "}
-          {participants.reduce((sum, participants) => {
+          {participantsSearched.reduce((sum, participants) => {
             if (participants.status === "participated") {
               return sum + 1;
             } else {
@@ -105,29 +143,34 @@ export default function AdminPage() {
           </tr>
         </thead>
         <tbody>
-          {participants.map((participant, index) => {
+          {participantsSearched.map((participant, index) => {
             return (
-              <tr key={participant.refDoc}>
+              <tr key={index}>
                 <td>{index + 1}</td>
                 <td>{participant.email}</td>
                 <td
                   className={
-                    participant.status == "participated" && "text-success"
+                    (participant.status == "participated" && "text-success") ||
+                    null
                   }
                 >
                   {participant.status}
                 </td>
                 <td>
                   <Button
+                    disabled={loading}
+                    className="bg-danger"
                     onClick={() => {
-                      handleButtonDelete(participant.refDoc);
+                      handleButtonDelete(participant.id);
                     }}
                   >
                     Delete
                   </Button>
                   <Button
+                    disabled={loading}
+                    className="bg-success"
                     onClick={() => {
-                      handleButtonAttendance(participant.refDoc);
+                      handleButtonAttendance(participant.id);
                     }}
                   >
                     Attendance

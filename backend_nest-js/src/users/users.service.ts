@@ -30,7 +30,7 @@ export class UsersService {
       .get();
 
     return {
-      refDoc: usersRef.id,
+      id: usersRef.id,
       ...user.data(),
     };
   }
@@ -42,25 +42,27 @@ export class UsersService {
       .where('email', '==', email)
       .get();
 
-    if (usersRef.empty) {
-      return null;
-    }
+    if (usersRef.empty) return null;
 
     return {
-      refDoc: usersRef.docs[0].id,
+      id: usersRef.docs[0].id,
       ...usersRef.docs[0].data(),
     };
   }
 
   async findById(id) {
-    const user = await this.firebaseService
+    const usersRef = await this.firebaseService
       .getFirestore()
       .collection('users')
       .doc(id)
       .get();
+
+    if (!usersRef.exists) return null;
+
     return {
-      refDoc: id,
-      ...user.data(),
+      id: id,
+      email: usersRef.data().email,
+      roles: usersRef.data().roles,
     };
   }
 }
